@@ -1,0 +1,58 @@
+mkdir Work
+
+cd Work
+
+mkdir "Лабораторная работа №1" "Лисицин Артём Дмитриевич"
+
+chmod 772 "Лабораторная работа №1"
+
+chmod 200 "Лисицин Артём Дмитриевич"
+
+touch "Text @1" "Text $2" "Text #3"
+
+cat << EOF > "Text @1"
+> Птица говорун отличается умом и сообразительностью!
+> Отличается умом, отличается сообразительностью...
+> EOF
+
+cat "Text @1" > "Text $2"
+
+sudo cp "Text @1" "Лисицин Артём Дмитриевич"
+
+gzip "Text @1" "Text #3"
+
+tar -cf MyAchiv.rar "Text @1.gz" "Text #3.gz
+
+gzip -d "Text @1.gz" "Text #3.gz"
+
+head -n 1 "Text @1" | cat - "Text #3" > temp && mv temp "Text #3"
+
+echo "Будь осторожен! Преступник вооружен!" >> "Text #3"
+
+sudo touch "Лисицин Артём Дмитриевич"/"Result_one"
+
+chmod 300 "Лисицин Артём Дмитриевич"
+
+sudo tac "Text @1" > "Лисицин Артём Дмитриевич"/"Result_one"
+
+chmod 200 "Лисицин Артём Дмитриевич"
+
+mv "Лисицин Артём Дмитриевич"/Result_one "Лисицин Артём Дмитриевич"/Result_two
+
+touch "Лабораторная работа №1"/Result_3
+
+chmod 700 "Лисицин Артём Дмитриевич"
+
+for item in "Лисицин Артём Дмитриевич"/T*; do
+ if [ -d "$item" ]; then
+  sudo ls "$item" > "Лабораторная работа №1"/Result_3 ;
+ elif [ -f "$item" ];then
+  cat "$item" >> "Лабораторная работа №1"/Result_3; 
+ fi;
+done
+
+chmod 200 "Лисицин Артём Дмитриевич"
+
+uname -a >> "Лабораторная работа №1"/Result_3
+
+date >> "Лабораторная работа №1"/Result_3
