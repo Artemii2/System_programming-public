@@ -1,3 +1,5 @@
+
+
 format ELF64
 
 public _start
@@ -5,46 +7,62 @@ public exit
 public print_symb
 
 section '.bss' writable
-  array db 14 dup ('*')
-  newline db 29 dup (0xA)
-  place db 1
+  number dq 3618218374    
+  result dq 0            
+  ten dq 10                  
+  place db 1         
 
 section '.text' executable
   _start:
-    xor rsi, rsi
-    .iter1:
-      xor rdi, rdi  
-      .iter2:
-        mov al, [array+rdi]
-        push rdi
-        call print_symb
-        pop rdi
-        inc rdi
-        cmp rdi,7
-        jne .iter2
-
-      mov al, [newline+rsi]
-      push rsi
-      call print_symb
-      pop rsi
-
-      inc rsi
-      cmp rsi,15
-      jne .iter1
-    call exit
+    mov rax, [number]      
+    xor rbx, rbx            
+    .sum_loop:
+      xor rdx, rdx           
+      div qword [ten]         
+      add rbx, rdx            
+      test rax, rax              
+      jnz .sum_loop        
+    mov [result], rbx        
+    call print_symb         
+    mov eax, 60              
+    xor edi, edi        
+    syscall                  
 
 print_symb:
-  push rax           
-  mov [place], al    
-  mov eax, 4         
-  mov ebx, 1         
-  mov ecx, place     
-  mov edx, 1        
-  int 0x80           
-  pop rax            
-  ret
+    mov rax, [result]       
+    mov rdi, 10             
+    xor rbx, rbx             
+    cmp rax, 0
+    je .print_zero
+    .loop:
+        xor rdx, rdx           
+        div rdi               
+        push rdx                
+        inc rbx                
+        test rax, rax           
+        jnz .loop                 
+    .print_loop:
+        pop rax                  
+        add rax, '0'             
+        mov [place], al         
+        mov eax, 1              
+        mov edi, 1              
+        mov rsi, place         
+        mov edx, 1              
+        syscall
+        dec rbx                 
+        jnz .print_loop       
+    ret
+    .print_zero:
+        mov byte [place], '0'
+        mov eax, 1              
+        mov edi, 1              
+        mov rsi, place         
+        mov edx, 1              
+        syscall
+        ret
 
 exit:
-  mov eax, 1         
-  mov ebx, 0         
-  int 0x80
+  mov eax, 60
+  xor edi, edi
+  syscall
