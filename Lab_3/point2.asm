@@ -3,157 +3,112 @@ format ELF64
 public _start
 
 section '.bss' writable
-    place db 1
-    result db 20
+    buffer db 1
 
 section '.text' executable
 
-str_number:
+string_to_number:
     push rcx
     push rbx
 
     xor rax, rax
     xor rcx, rcx
-.loop:
-    xor rbx, rbx
-    mov bl, byte [rsi + rcx]
-    cmp bl, 48
-    jl .finished
-    cmp bl, 57
-    jg .finished
 
-    sub bl, 48
+.string_parse_loop:
+    xor rbx, rbx
+    mov bl, byte [rsi + rcx]     ; Чтение символа из строки
+    cmp bl, '0'
+    jl .check_conversion_end
+    cmp bl, '9'
+    jg .check_conversion_end
+
+    sub bl, '0'                  ; Преобразование ASCII символа в цифру
     add rax, rbx
     mov rbx, 10
-    mul rbx
+    imul rax, rbx
     inc rcx
-    jmp .loop
+    jmp .string_parse_loop
 
-.finished:
+.check_conversion_end:
     cmp rcx, 0
-    je .restore
-
+    je .reset_value
     mov rbx, 10
     div rbx
 
-.restore:
+.reset_value:
     pop rbx
     pop rcx
     ret
 
-print_dig:
+print_symbol:
     xor rbx, rbx
 
     cmp rax, 9
-    jle .single_digit
+    jle .print_single_digit
 
     mov rcx, 10
-.loop:
+.print_loop:
     xor rdx, rdx
     div rcx
     push rdx
     inc rbx
     test rax, rax
-    jnz .loop
+    jnz .print_loop
 
-.print_loop:
+.output_loop:
     pop rax
     add rax, '0'
-    mov [place], al
+    mov [buffer], al
 
     mov eax, 1
     mov edi, 1
-    mov rsi, place
+    mov rsi, buffer
     mov edx, 1
     syscall
 
     dec rbx
-    jnz .print_loop
+    jnz .output_loop
 
     ret
 
-.single_digit:
+.print_single_digit:
     add rax, '0'
-    mov [place], al
+    mov [buffer], al
 
     mov eax, 1
     mov edi, 1
-    mov rsi, place
+    mov rsi, buffer
     mov edx, 1
     syscall
     ret
 
-print_msg:
-    ; rsi указывает на строку для печати, rdx - длина строки
-    mov eax, 1               ; syscall: write
-    mov edi, 1               ; file descriptor: stdout
-    syscall
-    ret
-
 _start:
-    pop rcx                  ; Получаем количество аргументов из стека
-    cmp rcx, 4               ; Проверяем, что переданы ровно 3 аргумента
-    jne .no_arg              ; Если нет, выходим
+    pop rcx
+    cmp rcx, 4
+    jne .exit_program
 
-    ; Чтение первого аргумента (b)
-    mov rsi, [rsp + 8]       ; Первый аргумент (b)
-    call str_number          ; Конвертируем в число
-    mov rbx, rax             ; Сохраняем в rbx (b)
-    call print_dig           ; Печатаем b (для проверки)
+    mov rsi, [rsp + 8]
+    call string_to_number
+    mov rbx, rax
 
-    ; Чтение второго аргумента (a)
-    mov rsi, [rsp + 16]      ; Второй аргумент (a)
-    call str_number          ; Конвертируем в число
-    mov rcx, rax             ; Сохраняем в rcx (a)
-    call print_dig           ; Печатаем a (для проверки)
+    mov rsi, [rsp + 16]
+    call string_to_number
+    mov rcx, rax
 
-    ; Проверка, что a != 0
-    cmp rcx, 0               ; Сравниваем a с 0
-    je .div_by_zero          ; Если a = 0, выходим с ошибкой
+    mov rsi, [rsp + 24]
+    call string_to_number
+    mov rdx, rax
 
-    ; Чтение третьего аргумента (c)
-    mov rsi, [rsp + 24]      ; Третий аргумент (c)
-    call str_number          ; Конвертируем в число
-    mov rdx, rax             ; Сохраняем в rdx (c)
-    call print_dig           ; Печатаем c (для проверки)
+    mov rax, rbx
+    imul rax, rcx
+    imul rax, rcx
+    imul rax, rdx
+    xor rdx, rdx
+    div rbx
 
-    ; Выражение ((((b * a) / a) * b) * c)
-    ; Выражение ((((b * a) / a) * b) * c)
-mov rax, rbx             ; rax = b
-imul rax, rcx            ; rax = b * a
+    call print_symbol
 
-xor rdx, rdx             ; Обнуляем rdx перед div
-div rcx                  ; rax = (b * a) / a
-
-imul rax, rbx            ; rax = ((b * a) / a) * b
-imul rax, rdx            ; rax = (((b * a) / a) * b) * c
-
-; Печать результата
-call print_dig
-         ; Печатаем окончательный результат
-
-    ; Завершение программы
-    mov eax, 60              ; syscall: exit
-    xor edi, edi             ; статус: 0
+.exit_program:
+    mov eax, 60
+    xor edi, edi
     syscall
-
-.div_by_zero:
-    ; Обработка ошибки деления на ноль
-    mov rsi, msg_zero_div
-    mov edx, 25              ; Длина сообщения "Error: Division by zero!\n"
-    call print_msg
-    jmp .exit
-
-.no_arg:
-    ; Завершение программы при отсутствии аргументов
-    mov eax, 60              ; syscall: exit
-    xor edi, edi             ; статус: 0
-    syscall
-
-.exit:
-    mov eax, 60              ; syscall: exit
-    xor edi, edi             ; статус: 0
-    syscall
-
-section '.data' writable
-msg_zero_div db "Error: Division by zero!", 0xA
