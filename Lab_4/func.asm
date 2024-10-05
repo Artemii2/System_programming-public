@@ -1,122 +1,212 @@
-section '.data' writable
-    div_msg db 'Division by zero', 0xA, 0
-
-section '.text' executable
-
-; Ввод данных с клавиатуры
-input_keyboard:
-    mov rax, 0          ; Системный вызов для чтения
-    mov rdi, 0          ; Стандартный ввод
-    mov rdx, 255        ; Размер буфера для ввода
-    syscall             ; Выполнение системного вызова
-    ret
-
-; Преобразование строки в число
-; Вход rsi - указатель на строку
-; Выход rax - число
-str_number:
-    xor rax, rax        ; Обнуляем результат
-    xor rcx, rcx        ; Счетчик символов
-    xor rbx, rbx        ; Временный регистр для чисел
-.parse_loop:
-    mov bl, byte [rsi+rcx]   ; Читаем символ
-    cmp bl, 0x30        ; Сравниваем с '0'
-    jb .done            ; Если меньше, конец строки
-    cmp bl, 0x39        ; Сравниваем с '9'
-    ja .done            ; Если больше, конец строки
-    sub bl, 0x30        ; Преобразуем символ в число
-    imul rax, rax, 10   ; Умножаем текущее число на 10
-    add rax, rbx        ; Прибавляем следующую цифру
-    inc rcx             ; Переходим к следующему символу
-    jmp .parse_loop     ; Цикл
-.done:
-    ret
-
-; Функция деления
-; Вход: rax - делимое, rbx - делитель
-; Выход: rdi - результат деления
-division:
-    cmp rbx, 0          ; Проверяем делитель на ноль
-    je .div_zero        ; Если ноль, выводим сообщение об ошибке
-    xor rdx, rdx        ; Обнуляем регистр остатка
-    div rbx             ; Деление rax на rbx
-    mov rdi, rax        ; Сохраняем результат в rdi
-    ret
-.div_zero:
-    mov rsi, div_msg    ; Адрес сообщения
-    call print_str      ; Выводим сообщение
-    call exit           ; Завершаем программу
-
-; Преобразование числа в строку
-; Вход: rax - число, выход: rsi - строка
-number_str:
-    mov rsi, msg        ; Адрес буфера для строки
-    xor rbx, rbx        ; Счетчик цифр
-    mov rcx, 10         ; Десятичная система счисления
-.convert_loop:
-    xor rdx, rdx        ; Обнуляем rdx
-    div rcx             ; Делим rax на 10
-    add dl, '0'         ; Преобразуем цифру в символ
-    mov [rsi + rbx], dl ; Записываем символ в строку
-    inc rbx             ; Увеличиваем счетчик
-    test rax, rax       ; Проверяем, осталось ли еще число
-    jnz .convert_loop   ; Если да, продолжаем
-    mov byte [rsi + rbx], 0   ; Завершаем строку нулевым байтом
-    ret
-
-; Вывод строки
-; Вход: rsi - указатель на строку
-print_str:
-    mov rax, 1          ; Системный вызов для записи
-    mov rdi, 1          ; Стандартный вывод
-    mov rdx, 255        ; Максимальный размер данных
-    syscall             ; Выполнение системного вызова
-    ret
-
-; Печать новой строки
-print_new:
-    mov rsi, 0xA        ; Символ новой строки
-    mov rdx, 1          ; Один байт
-    call print_str      ; Вызов функции печати
-    ret
-
-; Завершение программы
-exit:
-    mov rax, 60         ; Системный вызов для завершения программы
-    xor rdi, rdi        ; Код завершения
-    syscall             ; Выполнение системного вызова
-    ret
-
-section '.data' writable
-    div_msg db 'Division by zero', 0xA, 0
-
-section '.text' executable
-
-; Проверка делимости на число, переданное в rdi
-; Вход: rax - число, rdi - делитель
-; Выход: rax - 1, если делится, 0 - если не делится
-is_divisible:
-    push rdx
-    xor rdx, rdx        ; Обнуляем rdx перед делением
-    div rdi             ; Делим rax на rdi
-    test rdx, rdx       ; Проверяем остаток от деления
-    sete al             ; Если остаток нулевой, значит делится
-    pop rdx
-    ret
-
-; Функция деления
-; Вход: rax - делимое, rbx - делитель
-; Выход: rdi - результат деления
-division:
-    cmp rbx, 0          ; Проверяем делитель на ноль
-    je .div_zero        ; Если ноль, выводим сообщение об ошибке
-    xor rdx, rdx        ; Обнуляем регистр остатка
-    div rbx             ; Деление rax на rbx
-    mov rdi, rax        ; Сохраняем результат в rdi
-    ret
-.div_zero:
-    mov rsi, div_msg    ; Адрес сообщения
-    call print_str      ; Выводим сообщение
-    call exit           ; Завершаем программу
-
-; Остальные функции: input_keyboard, str_number, number_str, print_str, print_new, exit - остаются теми же.
+exit: 
+     mov rax, 60 
+     mov rdi, 0 
+     syscall 
+ 
+print_minus: 
+    push rdi 
+    push rsi 
+    push rdx 
+    push rax 
+    mov rdi, 1 
+    mov rsi, symbol 
+    mov rdx, 1 
+    mov rax, 1 
+    syscall 
+    pop rax 
+    pop rdx 
+    pop rsi 
+    pop rdi 
+    ret 
+ 
+;Function printing of string 
+;input rsi - place of memory of begin string 
+print_str: 
+    push rax 
+    push rdi 
+    push rdx 
+    push rcx 
+    mov rax, rsi 
+    call len_str 
+    mov rdx, rax 
+    mov rax, 1 
+    mov rdi, 1 
+    syscall 
+    pop rcx 
+    pop rdx 
+    pop rdi 
+    pop rax 
+    ret 
+ 
+;The function makes new line 
+new_line: 
+   push rax 
+   push rdi 
+   push rsi 
+   push rdx 
+   push rcx 
+   mov rax, 0xA 
+   push rax 
+   mov rdi, 1 
+   mov rsi, rsp 
+   mov rdx, 1 
+   mov rax, 1 
+   syscall 
+   pop rax 
+   pop rcx 
+   pop rdx 
+   pop rsi 
+   pop rdi 
+   pop rax 
+   ret 
+ 
+ 
+;The function finds the length of a string 
+;input rax - place of memory of begin string 
+;output rax - length of the string 
+len_str: 
+  push rdx 
+  mov rdx, rax 
+  .iter: 
+      cmp byte [rax], 0 
+      je .next 
+      inc rax 
+      jmp .iter 
+  .next: 
+     sub rax, rdx 
+     pop rdx 
+     ret 
+ 
+ 
+;Function converting the string to the number 
+;input rsi - place of memory of begin string 
+;output rax - the number from the string 
+str_number: 
+    push rcx 
+    push rbx 
+ 
+    xor rax,rax 
+    xor rcx,rcx 
+.loop: 
+    xor     rbx, rbx 
+    mov     bl, byte [rsi+rcx] 
+    cmp     bl, 48 
+    jl      .finished 
+    cmp     bl, 57 
+    jg      .finished 
+ 
+    sub     bl, 48 
+    add     rax, rbx 
+    mov     rbx, 10 
+    mul     rbx 
+    inc     rcx 
+    jmp     .loop 
+ 
+.finished: 
+    cmp     rcx, 0 
+    je      .restore 
+    mov     rbx, 10 
+    div     rbx 
+ 
+.restore: 
+    pop rbx 
+    pop rcx 
+    ret 
+ 
+;The function converts the nubmer to string 
+;input rax - number 
+;rsi -address of begin of string 
+number_str: 
+  push rbx 
+  push rcx 
+  push rdx 
+  xor rcx, rcx 
+  mov rbx, 10 
+  .loop_1: 
+    xor rdx, rdx 
+    div rbx 
+    add rdx, 48 
+    push rdx 
+    inc rcx 
+    cmp rax, 0 
+    jne .loop_1 
+  xor rdx, rdx 
+  .loop_2: 
+    pop rax 
+    mov byte [rsi+rdx], al 
+    inc rdx 
+    dec rcx 
+    cmp rcx, 0 
+  jne .loop_2 
+  mov byte [rsi+rdx], 0    
+  pop rdx 
+  pop rcx 
+  pop rbx 
+  ret 
+ 
+ 
+;The function realizates user input from the keyboard 
+;input: rsi - place of memory saved input string  
+input_keyboard: 
+  push rax 
+  push rdi 
+  push rdx 
+ 
+  mov rax, 0 
+  mov rdi, 0 
+  mov rdx, 255 
+  syscall 
+ 
+  xor rcx, rcx 
+  .loop: 
+     mov al, [rsi+rcx] 
+     inc rcx 
+     cmp rax, 0x0A 
+     jne .loop 
+  dec rcx 
+  mov byte [rsi+rcx], 0 
+   
+  pop rdx 
+  pop rdi 
+  pop rax 
+  ret
+ 
+calcuate_numbers: 
+    push rax 
+    push rbx 
+    push rcx 
+    push rdx 
+    mov rbx, rax 
+ 
+    mov rdi, 0 
+ 
+    .loop: 
+        mov rdx, 0 
+        mov rax, 0 
+        mov rcx, 5 
+        mov rax, rbx 
+        div rcx 
+        cmp rdx, 0 
+        jnz .not_del 
+         
+        mov rdx, 0 
+        mov rax, rbx 
+        mov rcx, 11 
+        div rcx 
+        cmp rdx, 0 
+        jnz .not_del 
+ 
+        dec rbx 
+        jnz .loop 
+ 
+        .not_del: 
+            inc rdi 
+            dec rbx 
+            jnz .loop 
+         
+    pop rdx 
+    pop rcx 
+    pop rbx 
+    pop rax 
+ 
+    ret 

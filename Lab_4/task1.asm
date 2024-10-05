@@ -1,31 +1,27 @@
-format ELF64
-public _start
+format ELF64 
 
-msg rb 255
+public _start 
 
-include 'func.asm'
-
-_start:
- mov rsi, msg
- call input_keyboard
-    call str_number
- mov rcx, rax
- mov rax, 1
- xor rbx, rbx
- .loop:
-  inc rax
-  cmp rax, rcx
-  je .end
-  call division
-  cmp rdi, 0
-  jne .loop
-  inc rbx
-  jmp .loop
- .end:
-  mov rax, rbx
-  call number_str
-  call print_str
-  call print_new
-
-
-  call exit
+public calcuate_numbers 
+ 
+include 'func.asm' 
+ 
+section '.data' 
+symbol db '-' 
+ 
+section '.bss' writable 
+    place rb 255 
+    answer rb 2 
+     
+section '.text' executable 
+_start: 
+    mov rsi, place 
+    call input_keyboard 
+    call str_number 
+    call calcuate_numbers 
+    mov rax, rdi 
+    mov rsi, answer 
+    call number_str 
+    call print_str 
+    call new_line 
+    call exit 
